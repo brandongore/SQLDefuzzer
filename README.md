@@ -27,8 +27,6 @@ create a user-defined bridge network, This isolates the container to its own net
 ```
 podman network create --driver bridge defuzzer-bridge-network
 ```
-creating a user-defined bridge network for your container
-
 Run the image with the isolated bridge network
 ```
 podman run --network defuzzer-bridge-network -p 5000:5000 sqlfluff-defuzzer-app

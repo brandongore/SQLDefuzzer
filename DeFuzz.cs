@@ -1,9 +1,13 @@
 ﻿using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
+using Newtonsoft.Json;
 using System;
 using System.ComponentModel.Design;
 using System.Diagnostics;
+using System.IO;
+using System.Net.Http;
+using System.Text;
 
 namespace SQLDefuzzer
 {
@@ -86,40 +90,64 @@ namespace SQLDefuzzer
         /// <param name="e">Event args.</param>
         private void MenuItemCallback(object sender, EventArgs e)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            EnvDTE.DTE dte = this.ServiceProvider.GetService(typeof(Microsoft.VisualStudio.Shell.Interop.SDTE)) as EnvDTE.DTE;
+            ThreadHelper.JoinableTaskFactory.Run(async delegate
+            {
+                EnvDTE.DTE dte = this.ServiceProvider.GetService(typeof(Microsoft.VisualStudio.Shell.Interop.SDTE)) as EnvDTE.DTE;
 
-            //get currently active window
-            Window activeWindow = ((DTE2)dte).ActiveWindow;
+                //get currently active window
+                Window activeWindow = ((DTE2)dte).ActiveWindow;
 
-            //get text from window
-            TextDocument textDoc = (TextDocument)activeWindow.Document.Object("TextDocument");
-            EditPoint editPoint = textDoc.StartPoint.CreateEditPoint();
-            string sqlQuery = editPoint.GetText(textDoc.EndPoint);
+                //get text from window
+                TextDocument textDoc = (TextDocument)activeWindow.Document.Object("TextDocument");
+                EditPoint editPoint = textDoc.StartPoint.CreateEditPoint();
+                string sqlQuery = editPoint.GetText(textDoc.EndPoint);
 
-            //setup parameters for calling sqlfluff
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.FileName = "python";
-            startInfo.Arguments = $"-m sqlfluff fix - --dialect=tsql";
-            startInfo.RedirectStandardInput = true;
-            startInfo.RedirectStandardOutput = true;
-            startInfo.UseShellExecute = false;
+                // setup parameters for calling Flask app
+                string flaskAppUrl = "http://localhost:5000/execute";
 
-            //start new process to format sql query
-            System.Diagnostics.Process process = new System.Diagnostics.Process();
-            process.StartInfo = startInfo;
-            process.Start();
+                // create JSON payload
+                var payload = new
+                {
+                    code = sqlQuery,
+                    configuration = new { dialect = "tsql", processes = -1 }
+                };
 
-            //send query to process
-            process.StandardInput.WriteLine(sqlQuery);
-            process.StandardInput.Close();
+                string jsonPayload = JsonConvert.SerializeObject(payload);
 
-            //read output from process
-            string formattedSqlQuery = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
+                try
+                {
+                    using (HttpClient client = new HttpClient())
+                    using (HttpContent content = new StringContent(jsonPayload, Encoding.UTF8, "application/json"))
+                    using (HttpResponseMessage response = await client.PostAsync(flaskAppUrl, content))
+                    using (Stream responseStream = await response.Content.ReadAsStreamAsync())
+                    using (StreamReader reader = new StreamReader(responseStream))
+                    {
+                        response.EnsureSuccessStatusCode(); // Ensure the HTTP response indicates success
 
-            //update text within query
-            editPoint.ReplaceText(textDoc.EndPoint, formattedSqlQuery, (int)vsEPReplaceTextOptions.vsEPReplaceTextAutoformat);
+                        // read the API response
+                        string apiResponse = await reader.ReadToEndAsync();
+
+                        // Deserialize the JSON response
+                        var jsonResponse = JsonConvert.DeserializeObject<SqlDefuzzerFlaskResponse>(apiResponse);
+
+                        // Extract the formatted SQL code from the response
+                        string formattedSqlQuery = jsonResponse.result;
+
+                        // update text within query
+                        editPoint.ReplaceText(textDoc.EndPoint, formattedSqlQuery, (int)vsEPReplaceTextOptions.vsEPReplaceTextAutoformat);
+                    }
+                }
+                catch (HttpRequestException ex)
+                {
+                    // Handle HTTP request-related exceptions
+                    Debug.WriteLine($"HTTP request failed: {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    // Handle other exceptions
+                    Debug.WriteLine($"An error occurred: {ex.Message}");
+                }
+            });
         }
     }
 }

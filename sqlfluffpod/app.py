@@ -1,12 +1,15 @@
 from flask import Flask, request, jsonify
-import subprocess
-import tempfile
-import os
-import configparser
-import shutil
-import sys
+from sqlfluff.core import FluffConfig, Linter, SQLBaseError
+from typing import List
+
+import sqlfluff
 
 app = Flask(__name__)
+
+def serialize_violations(violations: List[SQLBaseError]) -> List[dict]:
+    #Serialize a list of SQLBaseError objects to a list of dictionaries.
+    serialized_violations = [violation.get_info_dict() for violation in violations]
+    return serialized_violations
 
 @app.route('/execute', methods=['POST'])
 def execute_code():
@@ -17,37 +20,45 @@ def execute_code():
         code = data['code']
         configuration = data.get('configuration', {})
 
-        # Create a temporary directory
-        temp_dir = tempfile.mkdtemp()
+        # Create a FluffConfig object from the provided configuration
+        config = FluffConfig(configs={'core': configuration})
 
-        # Create a temporary configuration file with the allowed name
-        config_file_path = os.path.join(temp_dir, '.sqlfluff')
-        write_config_to_file(config_file_path, configuration)
-        
-        with open(config_file_path, 'r') as configfile:
-            config_content = configfile.read()
-            print(f'Configuration file content:\n{config_content}', file=sys.stderr)
+        # Create a Linter with the provided configuration
+        linter = Linter(config=config)
 
-        print(f'Config file path: {config_file_path}', file=sys.stderr)
-        # Modify the subprocess command to run sqlfluff with the provided SQL code
-        result = subprocess.check_output(['sqlfluff', 'fix', '-', f'--config={config_file_path}'],input=code, stderr=subprocess.STDOUT, text=True)
-        print(f'sqlfluff result:\n{result}', file=sys.stderr)
+        # Lint and fix the SQL code
+        lint_result = linter.lint_string(code, fix=True)
+        fixed_code = lint_result.fix_string()
 
-        return jsonify({'result': result}), 200
+        return jsonify({'result': fixed_code[0], 'success': fixed_code[1]}), 200
     except Exception as e:
-        print(f'Error: {str(e)}')
-        return jsonify({'error': str(e)}), 500
-    finally:
-        # Cleanup: Remove the temporary directory
-        if temp_dir and os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
+        return jsonify({'result': str(e), 'success': False}), 500
+    
+@app.route('/lint', methods=['POST'])
+def lint_code():
+    try:
+        data = request.get_json()
 
-def write_config_to_file(file_path, configuration):
-    # Write the configuration to a temporary file
-    config = configparser.ConfigParser()
-    config.read_dict(configuration)
-    with open(file_path, 'w') as configfile:
-        config.write(configfile)
+        # Get the SQL code and configuration from the request payload
+        code = data['code']
+        configuration = data.get('configuration', {})
+
+        # Create a FluffConfig object from the provided configuration
+        config = FluffConfig(configs={'core': configuration})
+
+        # Create a Linter with the provided configuration
+        linter = Linter(config=config)
+
+        # Lint the SQL code
+        lint_result = linter.lint_string(code, fix=True)
+        violations = lint_result.get_violations()
+
+        # Serialize the violations to JSON
+        serialized_violations = serialize_violations(violations)
+
+        return jsonify({'result': serialized_violations, 'success': True}), 200
+    except Exception as e:
+        return jsonify({'result': str(e), 'success': False}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
