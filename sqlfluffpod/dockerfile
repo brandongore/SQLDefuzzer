@@ -1,0 +1,22 @@
+FROM python:3.8-slim
+
+WORKDIR /app
+
+# Copy app code and install dependencies
+COPY requirements.txt /app
+# Install dependencies as root
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Create a non-root user
+RUN adduser --disabled-password --gecos '' defuzzeruser
+# Switch to non-root user
+USER defuzzeruser
+
+# Copy the rest of the application code
+COPY . /app
+
+# Expose Flask app on port 5000
+EXPOSE 5000
+
+# Run Flask app
+CMD ["python", "app.py"]
