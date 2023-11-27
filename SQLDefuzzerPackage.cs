@@ -10,6 +10,8 @@ namespace SQLDefuzzer
     [PackageRegistration(UseManagedResourcesOnly = true)]
     [Guid(SQLDefuzzerPackage.PackageGuidString)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
+    [ProvideOptionPage(typeof(GeneralOptions), "SQLDefuzzer", "General", 0, 0, true)]
+    [ProvideOptionPage(typeof(SQLFLUFFOptions), "SQLDefuzzer", "SQLFLUFF", 0, 0, true)]
     public sealed class SQLDefuzzerPackage : Package
     {
         /// <summary>

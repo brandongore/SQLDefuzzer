@@ -48,9 +48,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="DeFuzz.cs" />
+    <Compile Include="GeneralOptions.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SqlDefuzzerFlaskResponse.cs" />
     <Compile Include="SQLDefuzzerPackage.cs" />
+    <Compile Include="SQLFluffFieldAttribute.cs" />
+    <Compile Include="SQLFLUFFOptions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="source.extension.vsixmanifest">

@@ -105,11 +105,14 @@ namespace SQLDefuzzer
                 // setup parameters for calling Flask app
                 string flaskAppUrl = "http://localhost:5000/execute";
 
+                var options = (SQLFLUFFOptions)package.GetDialogPage(typeof(SQLFLUFFOptions));
+                var config = options.BuildConfiguration();
+
                 // create JSON payload
                 var payload = new
                 {
                     code = sqlQuery,
-                    configuration = new { dialect = "tsql", processes = -1 }
+                    configuration = config
                 };
 
                 string jsonPayload = JsonConvert.SerializeObject(payload);
