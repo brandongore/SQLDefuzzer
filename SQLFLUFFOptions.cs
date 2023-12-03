@@ -3,8 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
 
 namespace SQLDefuzzer
 {
@@ -66,6 +65,204 @@ namespace SQLDefuzzer
         Python,
         [Description("Placeholder")]
         Placeholder
+    }
+
+    public enum AliasModalityOption
+    {
+        [Description("Implicit")]
+        Implicit,
+        [Description("Explicit")]
+        Explicit
+    }
+
+    public enum ColumnReferenceModalityOption
+    {
+        [Description("Consistent")]
+        Consistent,
+        [Description("Implicit")]
+        Implicit,
+        [Description("Explicit")]
+        Explicit
+    }
+
+    public enum StringCaseOption
+    {
+        [Description("Consistent")]
+        Consistent,
+        [Description("Upper")]
+        Upper,
+        [Description("Lower")]
+        Lower,
+        [Description("Capitalise")]
+        Capitalise
+    }
+
+    public enum StringCasePascalOption
+    {
+        [Description("Consistent")]
+        Consistent,
+        [Description("Upper")]
+        Upper,
+        [Description("Lower")]
+        Lower,
+        [Description("Pascal")]
+        Pascal,
+        [Description("Capitalise")]
+        Capitalise
+    }
+
+    public enum QuotedLiteralsOption
+    {
+        [Description("Consistent")]
+        Consistent,
+        [Description("Single Quotes")]
+        SingleQuotes,
+        [Description("Double Quotes")]
+        DoubleQuotes
+    }
+
+    public enum CastingStyleOption
+    {
+        [Description("Consistent")]
+        Consistent,
+        [Description("Shorthand")]
+        Shorthand,
+        [Description("Convert")]
+        Convert,
+        [Description("Cast")]
+        Cast
+    }
+
+    public enum ConsistentReferencesOption
+    {
+        [Description("Consistent")]
+        Consistent,
+        [Description("Qualified")]
+        Qualified,
+        [Description("Unqualified")]
+        Unqualified
+    }
+
+    public enum QuotedIdentifiersReferencesToFlagOption
+    {
+        [Description("All")]
+        All,
+        [Description("Aliases")]
+        Aliases,
+        [Description("Column Aliases")]
+        ColumnAliases,
+        [Description("None")]
+        None
+    }
+
+    public enum UnQuotedIdentifiersReferencesToFlagOption
+    {
+        [Description("All")]
+        All,
+        [Description("Aliases")]
+        Aliases,
+        [Description("Column Aliases")]
+        ColumnAliases
+    }
+
+    public enum JoinFromClauseOption
+    {
+        [Description("Join")]
+        Join,
+        [Description("From")]
+        From,
+        [Description("Both")]
+        Both
+    }
+
+    public enum JoinConditionOrderOption
+    {
+        [Description("Earlier")]
+        Earlier,
+        [Description("Later")]
+        Later
+    }
+
+    public enum FullyQualifyJoinTypesOption
+    {
+        [Description("Inner")]
+        Inner,
+        [Description("Outer")]
+        Outer,
+        [Description("Both")]
+        Both
+    }
+
+    public enum SelectTrailingCommaOption
+    {
+        [Description("Forbid")]
+        Forbid,
+        [Description("Require")]
+        Require
+    }
+
+    public enum SelectTargetsOption
+    {
+        [Description("Single")]
+        Single,
+        [Description("Multiple")]
+        Multiple
+    }
+
+    public enum CommentOrderingOption
+    {
+        [Description("Forbid")]
+        Forbid,
+        [Description("Require")]
+        Require
+    }
+
+    public enum CommentOrderOption
+    {
+        [Description("Before")]
+        Before,
+        [Description("After")]
+        After
+    }
+
+    public enum IndentUnitOption
+    {
+        [Description("Space")]
+        Space,
+        [Description("Tab")]
+        Tab
+    }
+
+    [UseDescription]
+    public enum LinePositionOption
+    {
+        [Description("Trailing")]
+        Trailing,
+        [Description("Leading")]
+        Leading,
+        [Description("Alone")]
+        Alone,
+        [Description("Trailing:Strict")]
+        TrailingStrict,
+        [Description("Leading:Strict")]
+        LeadingStrict,
+        [Description("Alone:Strict")]
+        AloneStrict
+    }
+
+    [UseDescription]
+    public enum SpacingOption
+    {
+        [Description("Touch")]
+        Touch,
+        [Description("Touch:Inline")]
+        TouchInline,
+        [Description("Single")]
+        Single,
+        [Description("Single:Inline")]
+        SingleInline,
+        [Description("Any")]
+        Any
     }
 
     public class EnumOptionConverter<T> : EnumConverter
@@ -211,7 +408,8 @@ namespace SQLDefuzzer
         [DisplayName("Indent Unit")]
         [Description("Indent Unit. Refer to https://docs.sqlfluff.com/en/stable/layout.html#configuring-indent-locations")]
         [SQLFluffField("indent_unit")]
-        public string IndentUnit { get; set; } = "space";
+        [TypeConverter(typeof(EnumOptionConverter<IndentUnitOption>))]
+        public IndentUnitOption IndentUnitType { get; set; } = IndentUnitOption.Space;
 
         [Category("indentation")]
         [DisplayName("Tab Space Size")]
@@ -273,306 +471,373 @@ namespace SQLDefuzzer
         [SQLFluffField("skip_indentation_in")]
         public string SkipIndentationIn { get; set; } = "script_content";
 
+        //[Category("indentation")]
+        //[DisplayName("Trailing Comments")]
+        //[Description("Trailing Comments.")]
+        //[SQLFluffField("trailing_comments")]
+        //[TypeConverter(typeof(EnumOptionConverter<CommentOrderingOption>))]
+        //public CommentOrderingOption TrailingComments { get; set; } = CommentOrderingOption.Forbid;
+
         [Category("indentation")]
         [DisplayName("Trailing Comments")]
         [Description("Trailing Comments.")]
         [SQLFluffField("trailing_comments")]
-        public string TrailingComments { get; set; } = "before";
+        [TypeConverter(typeof(EnumOptionConverter<CommentOrderOption>))]
+        public CommentOrderOption TrailingCommentsOrder { get; set; } = CommentOrderOption.Before;
 
         [Category("layout:type:comma")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string CommaSpacingBefore { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption CommaSpacingBefore { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:comma")]
         [DisplayName("Line Position")]
         [SQLFluffField("line_position")]
-        public string CommaLinePosition { get; set; } = "trailing";
+        [TypeConverter(typeof(EnumOptionConverter<LinePositionOption>))]
+        public LinePositionOption CommaLinePosition { get; set; } = LinePositionOption.Trailing;
 
         [Category("layout:type:binary_operator")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string BinaryOperatorSpacingWithin { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption BinaryOperatorSpacingWithin { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:binary_operator")]
         [DisplayName("Line Position")]
         [SQLFluffField("line_position")]
-        public string BinaryOperatorLinePosition { get; set; } = "leading";
+        [TypeConverter(typeof(EnumOptionConverter<LinePositionOption>))]
+        public LinePositionOption BinaryOperatorLinePosition { get; set; } = LinePositionOption.Leading;
 
         [Category("layout:type:statement_terminator")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string StatementTerminatorSpacingBefore { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption StatementTerminatorSpacingBefore { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:statement_terminator")]
         [DisplayName("Line Position")]
         [SQLFluffField("line_position")]
-        public string StatementTerminatorLinePosition { get; set; } = "trailing";
+        [TypeConverter(typeof(EnumOptionConverter<LinePositionOption>))]
+        public LinePositionOption StatementTerminatorLinePosition { get; set; } = LinePositionOption.Trailing;
 
         [Category("layout:type:end_of_file")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string EndOfFileSpacingBefore { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption EndOfFileSpacingBefore { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:set_operator")]
         [DisplayName("Line Position")]
         [SQLFluffField("line_position")]
-        public string SetOperatorLinePosition { get; set; } = "alone:strict";
+        [TypeConverter(typeof(EnumOptionConverter<LinePositionOption>))]
+        public LinePositionOption SetOperatorLinePosition { get; set; } = LinePositionOption.AloneStrict;
 
         [Category("layout:type:start_bracket")]
         [DisplayName("Spacing After")]
         [SQLFluffField("spacing_after")]
-        public string StartBracketSpacingAfter { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption StartBracketSpacingAfter { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:end_bracket")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string EndBracketSpacingBefore { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption EndBracketSpacingBefore { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:start_square_bracket")]
         [DisplayName("Spacing After")]
         [SQLFluffField("spacing_after")]
-        public string StartSquareBracketSpacingAfter { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption StartSquareBracketSpacingAfter { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:end_square_bracket")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string EndSquareBracketSpacingBefore { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption EndSquareBracketSpacingBefore { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:start_angle_bracket")]
         [DisplayName("Spacing After")]
         [SQLFluffField("spacing_after")]
-        public string StartAngleBracketSpacingAfter { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption StartAngleBracketSpacingAfter { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:end_angle_bracket")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string EndAngleBracketSpacingBefore { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption EndAngleBracketSpacingBefore { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:casting_operator")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string CastingOperatorSpacingBefore { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption CastingOperatorSpacingBefore { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:casting_operator")]
         [DisplayName("Spacing After")]
         [SQLFluffField("spacing_after")]
-        public string CastingOperatorSpacingAfter { get; set; } = "touch:inline";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption CastingOperatorSpacingAfter { get; set; } = SpacingOption.TouchInline;
 
         [Category("layout:type:slice")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string SliceSpacingBefore { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption SliceSpacingBefore { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:slice")]
         [DisplayName("Spacing After")]
         [SQLFluffField("spacing_after")]
-        public string SliceSpacingAfter { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption SliceSpacingAfter { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:dot")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string DotSpacingBefore { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption DotSpacingBefore { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:dot")]
         [DisplayName("Spacing After")]
         [SQLFluffField("spacing_after")]
-        public string DotSpacingAfter { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption DotSpacingAfter { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:comparison_operator")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string ComparisonOperatorSpacingWithin { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption ComparisonOperatorSpacingWithin { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:comparison_operator")]
         [DisplayName("Line Position")]
         [SQLFluffField("line_position")]
-        public string ComparisonOperatorLinePosition { get; set; } = "leading";
+        [TypeConverter(typeof(EnumOptionConverter<LinePositionOption>))]
+        public LinePositionOption ComparisonOperatorLinePosition { get; set; } = LinePositionOption.Leading;
 
         [Category("layout:type:assignment_operator")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string AssignmentOperatorSpacingWithin { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption AssignmentOperatorSpacingWithin { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:assignment_operator")]
         [DisplayName("Line Position")]
         [SQLFluffField("line_position")]
-        public string AssignmentOperatorLinePosition { get; set; } = "leading";
+        [TypeConverter(typeof(EnumOptionConverter<LinePositionOption>))]
+        public LinePositionOption AssignmentOperatorLinePosition { get; set; } = LinePositionOption.Leading;
 
         [Category("layout:type:object_reference")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string ObjectReferenceSpacingWithin { get; set; } = "touch:inline";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption ObjectReferenceSpacingWithin { get; set; } = SpacingOption.TouchInline;
 
         [Category("layout:type:numeric_literal")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string NumericLiteralSpacingWithin { get; set; } = "touch:inline";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption NumericLiteralSpacingWithin { get; set; } = SpacingOption.TouchInline;
 
         [Category("layout:type:sign_indicator")]
         [DisplayName("Spacing After")]
         [SQLFluffField("spacing_after")]
-        public string SignIndicatorSpacingAfter { get; set; } = "touch:inline";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption SignIndicatorSpacingAfter { get; set; } = SpacingOption.TouchInline;
 
         [Category("layout:type:tilde")]
         [DisplayName("Spacing After")]
         [SQLFluffField("spacing_after")]
-        public string TildeSpacingAfter { get; set; } = "touch:inline";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption TildeSpacingAfter { get; set; } = SpacingOption.TouchInline;
 
         [Category("layout:type:function_name")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string FunctionNameSpacingWithin { get; set; } = "touch:inline";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption FunctionNameSpacingWithin { get; set; } = SpacingOption.TouchInline;
 
         [Category("layout:type:function_name")]
         [DisplayName("Spacing After")]
         [SQLFluffField("spacing_after")]
-        public string FunctionNameSpacingAfter { get; set; } = "touch:inline";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption FunctionNameSpacingAfter { get; set; } = SpacingOption.TouchInline;
 
         [Category("layout:type:array_type")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string ArrayTypeSpacingWithin { get; set; } = "touch:inline";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption ArrayTypeSpacingWithin { get; set; } = SpacingOption.TouchInline;
 
         [Category("layout:type:typed_array_literal")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string TypedArrayLiteralSpacingWithin { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption TypedArrayLiteralSpacingWithin { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:sized_array_type")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string SizedArrayTypeSpacingWithin { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption SizedArrayTypeSpacingWithin { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:struct_type")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string StructTypeSpacingWithin { get; set; } = "touch:inline";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption StructTypeSpacingWithin { get; set; } = SpacingOption.TouchInline;
 
         [Category("layout:type:bracketed_arguments")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string BracketedArgumentsSpacingBefore { get; set; } = "touch:inline";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption BracketedArgumentsSpacingBefore { get; set; } = SpacingOption.TouchInline;
 
         [Category("layout:type:typed_struct_literal")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string TypedStructLiteralSpacingWithin { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption TypedStructLiteralSpacingWithin { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:semi_structured_expression")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string SemiStructuredExpressionSpacingWithin { get; set; } = "touch:inline";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption SemiStructuredExpressionSpacingWithin { get; set; } = SpacingOption.TouchInline;
 
         [Category("layout:type:semi_structured_expression")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string SemiStructuredExpressionSpacingBefore { get; set; } = "touch:inline";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption SemiStructuredExpressionSpacingBefore { get; set; } = SpacingOption.TouchInline;
 
         [Category("layout:type:array_accessor")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string ArrayAccessorSpacingBefore { get; set; } = "touch:inline";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption ArrayAccessorSpacingBefore { get; set; } = SpacingOption.TouchInline;
 
         [Category("layout:type:colon")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string ColonSpacingBefore { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption ColonSpacingBefore { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:colon_delimiter")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string ColonDelimiterSpacingBefore { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption ColonDelimiterSpacingBefore { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:colon_delimiter")]
         [DisplayName("Spacing After")]
         [SQLFluffField("spacing_after")]
-        public string ColonDelimiterSpacingAfter { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption ColonDelimiterSpacingAfter { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:path_segment")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string PathSegmentSpacingWithin { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption PathSegmentSpacingWithin { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:sql_conf_option")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string SQLConfOptionSpacingWithin { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption SQLConfOptionSpacingWithin { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:sqlcmd_operator")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string SQLCmdOperatorSpacingBefore { get; set; } = "touch";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption SQLCmdOperatorSpacingBefore { get; set; } = SpacingOption.Touch;
 
         [Category("layout:type:comment")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string CommentSpacingBefore { get; set; } = "any";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption CommentSpacingBefore { get; set; } = SpacingOption.Any;
 
         [Category("layout:type:comment")]
         [DisplayName("Spacing After")]
         [SQLFluffField("spacing_after")]
-        public string CommentSpacingAfter { get; set; } = "any";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption CommentSpacingAfter { get; set; } = SpacingOption.Any;
 
         [Category("layout:type:pattern_expression")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string PatternExpressionSpacingWithin { get; set; } = "any";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption PatternExpressionSpacingWithin { get; set; } = SpacingOption.Any;
 
         [Category("layout:type:placeholder")]
         [DisplayName("Spacing Before")]
         [SQLFluffField("spacing_before")]
-        public string PlaceholderSpacingBefore { get; set; } = "any";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption PlaceholderSpacingBefore { get; set; } = SpacingOption.Any;
 
         [Category("layout:type:placeholder")]
         [DisplayName("Spacing After")]
         [SQLFluffField("spacing_after")]
-        public string PlaceholderSpacingAfter { get; set; } = "any";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption PlaceholderSpacingAfter { get; set; } = SpacingOption.Any;
 
         [Category("layout:type:common_table_expression")]
         [DisplayName("Spacing Within")]
         [SQLFluffField("spacing_within")]
-        public string CommonTableExpressionSpacingWithin { get; set; } = "single:inline";
+        [TypeConverter(typeof(EnumOptionConverter<SpacingOption>))]
+        public SpacingOption CommonTableExpressionSpacingWithin { get; set; } = SpacingOption.SingleInline;
 
         [Category("layout:type:select_clause")]
         [DisplayName("Line Position")]
         [SQLFluffField("line_position")]
-        public string SelectClauseLinePosition { get; set; } = "alone";
+        [TypeConverter(typeof(EnumOptionConverter<LinePositionOption>))]
+        public LinePositionOption SelectClauseLinePosition { get; set; } = LinePositionOption.Alone;
 
         [Category("layout:type:where_clause")]
         [DisplayName("Line Position")]
         [SQLFluffField("line_position")]
-        public string WhereClauseLinePosition { get; set; } = "alone";
+        [TypeConverter(typeof(EnumOptionConverter<LinePositionOption>))]
+        public LinePositionOption WhereClauseLinePosition { get; set; } = LinePositionOption.Alone;
 
         [Category("layout:type:from_clause")]
         [DisplayName("Line Position")]
         [SQLFluffField("line_position")]
-        public string FromClauseLinePosition { get; set; } = "alone";
+        [TypeConverter(typeof(EnumOptionConverter<LinePositionOption>))]
+        public LinePositionOption FromClauseLinePosition { get; set; } = LinePositionOption.Alone;
 
         [Category("layout:type:join_clause")]
         [DisplayName("Line Position")]
         [SQLFluffField("line_position")]
-        public string JoinClauseLinePosition { get; set; } = "alone";
+        [TypeConverter(typeof(EnumOptionConverter<LinePositionOption>))]
+        public LinePositionOption JoinClauseLinePosition { get; set; } = LinePositionOption.Alone;
 
         [Category("layout:type:groupby_clause")]
         [DisplayName("Line Position")]
         [SQLFluffField("line_position")]
-        public string GroupByClauseLinePosition { get; set; } = "alone";
+        [TypeConverter(typeof(EnumOptionConverter<LinePositionOption>))]
+        public LinePositionOption GroupByClauseLinePosition { get; set; } = LinePositionOption.Alone;
 
         [Category("layout:type:orderby_clause")]
         [DisplayName("Line Position")]
         [SQLFluffField("line_position")]
-        public string OrderByClauseLinePosition { get; set; } = "leading";
+        [TypeConverter(typeof(EnumOptionConverter<LinePositionOption>))]
+        public LinePositionOption OrderByClauseLinePosition { get; set; } = LinePositionOption.Leading;
 
         [Category("layout:type:having_clause")]
         [DisplayName("Line Position")]
         [SQLFluffField("line_position")]
-        public string HavingClauseLinePosition { get; set; } = "alone";
+        [TypeConverter(typeof(EnumOptionConverter<LinePositionOption>))]
+        public LinePositionOption HavingClauseLinePosition { get; set; } = LinePositionOption.Alone;
 
         [Category("layout:type:limit_clause")]
         [DisplayName("Line Position")]
         [SQLFluffField("line_position")]
-        public string LimitClauseLinePosition { get; set; } = "alone";
+        [TypeConverter(typeof(EnumOptionConverter<LinePositionOption>))]
+        public LinePositionOption LimitClauseLinePosition { get; set; } = LinePositionOption.Alone;
 
         [Category("templater")]
         [DisplayName("Unwrap Wrapped Queries")]
@@ -596,19 +861,22 @@ namespace SQLDefuzzer
         [DisplayName("Single Table References")]
         [Description("Single Table References.")]
         [SQLFluffField("single_table_references")]
-        public string SingleTableReferences { get; set; } = "consistent";
+        [TypeConverter(typeof(EnumOptionConverter<ConsistentReferencesOption>))]
+        public ConsistentReferencesOption SingleTableReferences { get; set; } = ConsistentReferencesOption.Consistent;
 
         [Category("rules")]
         [DisplayName("Unquoted Identifiers Policy")]
         [Description("Unquoted Identifiers Policy.")]
         [SQLFluffField("unquoted_identifiers_policy")]
-        public string UnquotedIdentifiersPolicy { get; set; } = "all";
+        [TypeConverter(typeof(EnumOptionConverter<UnQuotedIdentifiersReferencesToFlagOption>))]
+        public UnQuotedIdentifiersReferencesToFlagOption UnquotedIdentifiersPolicy { get; set; } = UnQuotedIdentifiersReferencesToFlagOption.All;
 
         [Category("rules:capitalisation.keywords")]
         [DisplayName("Capitalisation Policy")]
         [Description("Keywords.")]
         [SQLFluffField("capitalisation_policy")]
-        public string KeywordsCapitalisationPolicy { get; set; } = "consistent";
+        [TypeConverter(typeof(EnumOptionConverter<StringCaseOption>))]
+        public StringCaseOption KeywordsCapitalisationPolicy { get; set; } = StringCaseOption.Consistent;
 
         [Category("rules:capitalisation.keywords")]
         [DisplayName("Ignore Words")]
@@ -626,7 +894,15 @@ namespace SQLDefuzzer
         [DisplayName("Extended Capitalisation Policy")]
         [Description("Unquoted identifiers.")]
         [SQLFluffField("extended_capitalisation_policy")]
-        public string IdentifiersExtendedCapitalisationPolicy { get; set; } = "consistent";
+        [TypeConverter(typeof(EnumOptionConverter<StringCasePascalOption>))]
+        public StringCasePascalOption IdentifiersExtendedCapitalisationPolicy { get; set; } = StringCasePascalOption.Consistent;
+
+        [Category("rules:capitalisation.identifiers")]
+        [DisplayName("Unquoted Identifiers Policy")]
+        [Description("Unquoted identifiers.")]
+        [SQLFluffField("unquoted_identifiers_policy")]
+        [TypeConverter(typeof(EnumOptionConverter<UnQuotedIdentifiersReferencesToFlagOption>))]
+        public UnQuotedIdentifiersReferencesToFlagOption IdentifiersUnquotedIdentifiersPolicy { get; set; } = UnQuotedIdentifiersReferencesToFlagOption.All;
 
         [Category("rules:capitalisation.identifiers")]
         [DisplayName("Ignore Words")]
@@ -644,7 +920,8 @@ namespace SQLDefuzzer
         [DisplayName("Extended Capitalisation Policy")]
         [Description("Function names.")]
         [SQLFluffField("extended_capitalisation_policy")]
-        public string FunctionsExtendedCapitalisationPolicy { get; set; } = "consistent";
+        [TypeConverter(typeof(EnumOptionConverter<StringCasePascalOption>))]
+        public StringCasePascalOption FunctionsExtendedCapitalisationPolicy { get; set; } = StringCasePascalOption.Consistent;
 
         [Category("rules:capitalisation.functions")]
         [DisplayName("Ignore Words")]
@@ -662,7 +939,8 @@ namespace SQLDefuzzer
         [DisplayName("Capitalisation Policy")]
         [Description("Null & Boolean Literals.")]
         [SQLFluffField("capitalisation_policy")]
-        public string LiteralsCapitalisationPolicy { get; set; } = "consistent";
+        [TypeConverter(typeof(EnumOptionConverter<StringCaseOption>))]
+        public StringCaseOption LiteralsCapitalisationPolicy { get; set; } = StringCaseOption.Consistent;
 
         [Category("rules:capitalisation.literals")]
         [DisplayName("Ignore Words")]
@@ -680,7 +958,8 @@ namespace SQLDefuzzer
         [DisplayName("Extended Capitalisation Policy")]
         [Description("Data Types.")]
         [SQLFluffField("extended_capitalisation_policy")]
-        public string TypesExtendedCapitalisationPolicy { get; set; } = "consistent";
+        [TypeConverter(typeof(EnumOptionConverter<StringCasePascalOption>))] 
+        public StringCasePascalOption TypesExtendedCapitalisationPolicy { get; set; } = StringCasePascalOption.Consistent;
 
         [Category("rules:capitalisation.types")]
         [DisplayName("Ignore Words")]
@@ -698,25 +977,29 @@ namespace SQLDefuzzer
         [DisplayName("Fully Qualify Join Types")]
         [Description("Fully qualify JOIN clause.")]
         [SQLFluffField("fully_qualify_join_types")]
-        public string FullyQualifyJoinTypes { get; set; } = "inner";
+        [TypeConverter(typeof(EnumOptionConverter<FullyQualifyJoinTypesOption>))]
+        public FullyQualifyJoinTypesOption FullyQualifyJoinTypes { get; set; } = FullyQualifyJoinTypesOption.Inner;
 
         [Category("rules:ambiguous.column_references")]
         [DisplayName("Group By And Order By Style")]
         [Description("GROUP BY/ORDER BY column references.")]
         [SQLFluffField("group_by_and_order_by_style")]
-        public string GroupByAndOrderByStyle { get; set; } = "consistent";
+        [TypeConverter(typeof(EnumOptionConverter<ColumnReferenceModalityOption>))]
+        public ColumnReferenceModalityOption GroupByAndOrderByStyle { get; set; } = ColumnReferenceModalityOption.Consistent;
 
         [Category("rules:aliasing.table")]
         [DisplayName("Aliasing")]
         [Description("Aliasing preference for tables.")]
         [SQLFluffField("aliasing")]
-        public string TableAliasing { get; set; } = "explicit";
+        [TypeConverter(typeof(EnumOptionConverter<AliasModalityOption>))]
+        public AliasModalityOption TableAliasing { get; set; } = AliasModalityOption.Explicit;
 
         [Category("rules:aliasing.column")]
         [DisplayName("Aliasing")]
         [Description("Aliasing preference for columns.")]
         [SQLFluffField("aliasing")]
-        public string ColumnAliasing { get; set; } = "explicit";
+        [TypeConverter(typeof(EnumOptionConverter<AliasModalityOption>))]
+        public AliasModalityOption ColumnAliasing { get; set; } = AliasModalityOption.Explicit;
 
         [Category("rules:aliasing.length")]
         [DisplayName("Min Alias Length")]
@@ -740,7 +1023,8 @@ namespace SQLDefuzzer
         [DisplayName("Select Clause Trailing Comma")]
         [Description("Trailing commas.")]
         [SQLFluffField("select_clause_trailing_comma")]
-        public string SelectClauseTrailingComma { get; set; } = "forbid";
+        [TypeConverter(typeof(EnumOptionConverter<SelectTrailingCommaOption>))]
+        public SelectTrailingCommaOption SelectClauseTrailingComma { get; set; } = SelectTrailingCommaOption.Forbid;
 
         [Category("rules:convention.count_rows")]
         [DisplayName("Prefer Count 1")]
@@ -788,7 +1072,9 @@ namespace SQLDefuzzer
         [DisplayName("Preferred Quoted Literal Style")]
         [Description("Consistent usage of preferred quotes for quoted literals.")]
         [SQLFluffField("preferred_quoted_literal_style")]
-        public string PreferredQuotedLiteralStyle { get; set; } = "consistent";
+        [TypeConverter(typeof(EnumOptionConverter<QuotedLiteralsOption>))]
+        public QuotedLiteralsOption PreferredQuotedLiteralStyle { get; set; } = QuotedLiteralsOption.Consistent;
+
 
         [Category("rules:convention.quoted_literals")]
         [DisplayName("Force Enable")]
@@ -800,7 +1086,8 @@ namespace SQLDefuzzer
         [DisplayName("Preferred Type Casting Style")]
         [Description("SQL type casting.")]
         [SQLFluffField("preferred_type_casting_style")]
-        public string PreferredTypeCastingStyle { get; set; } = "consistent";
+        [TypeConverter(typeof(EnumOptionConverter<CastingStyleOption>))]
+        public CastingStyleOption PreferredTypeCastingStyle { get; set; } = CastingStyleOption.Consistent;
 
         [Category("rules:references.from")]
         [DisplayName("Force Enable")]
@@ -830,13 +1117,15 @@ namespace SQLDefuzzer
         [DisplayName("Unquoted Identifiers Policy")]
         [Description("Keywords should not be used as identifiers.")]
         [SQLFluffField("unquoted_identifiers_policy")]
-        public string ReferencesKeywordsUnquotedIdentifiersPolicy { get; set; } = "aliases";
+        [TypeConverter(typeof(EnumOptionConverter<UnQuotedIdentifiersReferencesToFlagOption>))]
+        public UnQuotedIdentifiersReferencesToFlagOption ReferencesKeywordsUnquotedIdentifiersPolicy { get; set; } = UnQuotedIdentifiersReferencesToFlagOption.All;
 
         [Category("rules:references.keywords")]
         [DisplayName("Quoted Identifiers Policy")]
         [Description("Keywords should not be used as identifiers.")]
         [SQLFluffField("quoted_identifiers_policy")]
-        public string ReferencesKeywordsQuotedIdentifiersPolicy { get; set; } = "none";
+        [TypeConverter(typeof(EnumOptionConverter<QuotedIdentifiersReferencesToFlagOption>))]
+        public QuotedIdentifiersReferencesToFlagOption ReferencesKeywordsQuotedIdentifiersPolicy { get; set; } = QuotedIdentifiersReferencesToFlagOption.None;
 
         [Category("rules:references.keywords")]
         [DisplayName("Ignore Words")]
@@ -854,13 +1143,15 @@ namespace SQLDefuzzer
         [DisplayName("Unquoted Identifiers Policy")]
         [Description("Special characters in identifiers.")]
         [SQLFluffField("unquoted_identifiers_policy")]
-        public string ReferencesSpecialCharsUnquotedIdentifiersPolicy { get; set; } = "all";
+        [TypeConverter(typeof(EnumOptionConverter<UnQuotedIdentifiersReferencesToFlagOption>))]
+        public UnQuotedIdentifiersReferencesToFlagOption ReferencesSpecialCharsUnquotedIdentifiersPolicy { get; set; } = UnQuotedIdentifiersReferencesToFlagOption.All;
 
         [Category("rules:references.special_chars")]
         [DisplayName("Quoted Identifiers Policy")]
         [Description("Special characters in identifiers.")]
         [SQLFluffField("quoted_identifiers_policy")]
-        public string ReferencesSpecialCharsQuotedIdentifiersPolicy { get; set; } = "all";
+        [TypeConverter(typeof(EnumOptionConverter<QuotedIdentifiersReferencesToFlagOption>))]
+        public QuotedIdentifiersReferencesToFlagOption ReferencesSpecialCharsQuotedIdentifiersPolicy { get; set; } = QuotedIdentifiersReferencesToFlagOption.All;
 
         [Category("rules:references.special_chars")]
         [DisplayName("Allow Space In Identifier")]
@@ -932,23 +1223,29 @@ namespace SQLDefuzzer
         [DisplayName("Wildcard Policy")]
         [Description("Wildcard Policy.")]
         [SQLFluffField("wildcard_policy")]
-        public string WildcardPolicy { get; set; } = "single";
+        [TypeConverter(typeof(EnumOptionConverter<SelectTargetsOption>))]
+        public SelectTargetsOption WildcardPolicy { get; set; } = SelectTargetsOption.Single;
 
         [Category("rules:structure.subquery")]
         [DisplayName("Forbid Subquery In")]
         [Description("By default, allow subqueries in from clauses, but not join clauses.")]
         [SQLFluffField("forbid_subquery_in")]
-        public string ForbidSubqueryIn { get; set; } = "join";
+        [TypeConverter(typeof(EnumOptionConverter<JoinFromClauseOption>))]
+        public JoinFromClauseOption ForbidSubqueryIn { get; set; } = JoinFromClauseOption.Join;
 
         [Category("rules:structure.join_condition_order")]
         [DisplayName("Preferred First Table In Join Clause")]
         [Description("Preferred First Table In Join Clause.")]
         [SQLFluffField("preferred_first_table_in_join_clause")]
-        public string PreferredFirstTableInJoinClause { get; set; } = "earlier";
+        [TypeConverter(typeof(EnumOptionConverter<JoinConditionOrderOption>))]
+        public JoinConditionOrderOption PreferredFirstTableInJoinClause { get; set; } = JoinConditionOrderOption.Earlier;
 
         public object BuildConfiguration()
         {
             var config = new Dictionary<string, object>();
+
+            // Create an instance of the options class with default values
+            var defaultOptions = Activator.CreateInstance(GetType());
 
             foreach (var property in GetType().GetProperties())
             {
@@ -962,8 +1259,9 @@ namespace SQLDefuzzer
                     var propertyName = fluffFieldAttribute?.FieldName ?? displayNameAttribute?.DisplayName;
 
                     var value = property.GetValue(this);
+                    var defaultValue = property.GetValue(defaultOptions);
 
-                    if (categoryName != null && propertyName != null && value != null)
+                    if (categoryName != null && propertyName != null && value != null && !value.Equals(defaultValue))
                     {
                         var nestedKeys = categoryName.Split(':');
 
@@ -997,6 +1295,23 @@ namespace SQLDefuzzer
 
         private static string MapEnumOption<TEnum>(TEnum enumValue) where TEnum : Enum
         {
+            // Check if the UseDescription attribute is applied to the enum type
+            bool useDescription = Attribute.IsDefined(typeof(TEnum), typeof(UseDescriptionAttribute));
+
+            if (useDescription)
+            {
+                // Get the field info for this type
+                FieldInfo fi = enumValue.GetType().GetField(enumValue.ToString());
+
+                // Get the description attribute
+                DescriptionAttribute[] attributes =
+                    (DescriptionAttribute[])fi.GetCustomAttributes(typeof(DescriptionAttribute), false);
+
+                // Return the description if it exists
+                if (attributes != null && attributes.Length > 0)
+                    return attributes[0].Description.ToLower();
+            }
+
             // Convert the enum value to its string representation in lowercase
             return enumValue.ToString().ToLower();
         }

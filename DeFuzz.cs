@@ -92,10 +92,17 @@ namespace SQLDefuzzer
         {
             ThreadHelper.JoinableTaskFactory.Run(async delegate
             {
+                await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 EnvDTE.DTE dte = this.ServiceProvider.GetService(typeof(Microsoft.VisualStudio.Shell.Interop.SDTE)) as EnvDTE.DTE;
 
                 //get currently active window
                 Window activeWindow = ((DTE2)dte).ActiveWindow;
+
+                if (activeWindow == null)
+                {
+                    //return for now, can display a dialog in future
+                    return;
+                }
 
                 //get text from window
                 TextDocument textDoc = (TextDocument)activeWindow.Document.Object("TextDocument");
