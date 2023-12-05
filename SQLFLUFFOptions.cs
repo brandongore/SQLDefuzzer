@@ -10,49 +10,49 @@ namespace SQLDefuzzer
     public enum DialectOption
     {
         [Description("ansi Dialect [inherits from 'nothing']")]
-        ansi,
+        Ansi,
         [Description("athena Dialect [inherits from 'ansi']")]
-        athena,
+        Athena,
         [Description("bigquery Dialect [inherits from 'ansi']")]
-        bigquery,
+        Bigquery,
         [Description("clickhouse Dialect [inherits from 'ansi']")]
-        clickhouse,
+        Clickhouse,
         [Description("databricks Dialect [inherits from 'sparksql']")]
-        databricks,
+        Databricks,
         [Description("db2 Dialect [inherits from 'ansi']")]
-        db2,
+        Db2,
         [Description("duckdb Dialect [inherits from 'postgres']")]
-        duckdb,
+        Duckdb,
         [Description("exasol Dialect [inherits from 'ansi']")]
-        exasol,
+        Exasol,
         [Description("greenplum Dialect [inherits from 'postgres']")]
-        greenplum,
+        Greenplum,
         [Description("hive Dialect [inherits from 'ansi']")]
-        hive,
+        Hive,
         [Description("materialize Dialect [inherits from 'postgres']")]
-        materialize,
+        Materialize,
         [Description("mysql Dialect [inherits from 'ansi']")]
-        mysql,
+        Mysql,
         [Description("oracle Dialect [inherits from 'ansi']")]
-        oracle,
+        Oracle,
         [Description("postgres Dialect [inherits from 'ansi']")]
-        postgres,
+        Postgres,
         [Description("redshift Dialect [inherits from 'postgres']")]
-        redshift,
+        Redshift,
         [Description("snowflake Dialect [inherits from 'ansi']")]
-        snowflake,
+        Snowflake,
         [Description("soql Dialect [inherits from 'ansi']")]
-        soql,
+        Soql,
         [Description("sparksql Dialect [inherits from 'ansi']")]
-        sparksql,
+        Sparksql,
         [Description("sqlite Dialect [inherits from 'ansi']")]
-        sqlite,
+        Sqlite,
         [Description("teradata Dialect [inherits from 'ansi']")]
-        teradata,
+        Teradata,
         [Description("trino Dialect [inherits from 'ansi']")]
-        trino,
+        Trino,
         [Description("tsql Dialect [inherits from 'ansi']")]
-        tsql
+        Tsql
     }
 
     public enum TemplaterOption
@@ -299,7 +299,7 @@ namespace SQLDefuzzer
         [Description("Supported dialects https://docs.sqlfluff.com/en/stable/dialects.html")]
         [SQLFluffField("dialect")]
         [TypeConverter(typeof(EnumOptionConverter<DialectOption>))]
-        public DialectOption Dialect { get; set; } = DialectOption.tsql;
+        public DialectOption Dialect { get; set; } = DialectOption.Ansi;
 
         [Category("core")]
         [DisplayName("Templater")]

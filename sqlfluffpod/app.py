@@ -11,17 +11,18 @@ def serialize_violations(violations: List[SQLBaseError]) -> List[dict]:
     serialized_violations = [violation.get_info_dict() for violation in violations]
     return serialized_violations
 
-@app.route('/execute', methods=['POST'])
-def execute_code():
+@app.route('/fix', methods=['POST'])
+def fix_code():
     try:
         data = request.get_json()
 
         # Get the SQL code and configuration from the request payload
         code = data['code']
         configuration = data.get('configuration', {})
+        # Need to add --library-path none to config
 
         # Create a FluffConfig object from the provided configuration
-        config = FluffConfig(configs={'core': configuration})
+        config = FluffConfig(configs=configuration)
 
         # Create a Linter with the provided configuration
         linter = Linter(config=config)
@@ -44,7 +45,7 @@ def lint_code():
         configuration = data.get('configuration', {})
 
         # Create a FluffConfig object from the provided configuration
-        config = FluffConfig(configs={'core': configuration})
+        config = FluffConfig(configs=configuration)
 
         # Create a Linter with the provided configuration
         linter = Linter(config=config)

@@ -110,7 +110,7 @@ namespace SQLDefuzzer
                 string sqlQuery = editPoint.GetText(textDoc.EndPoint);
 
                 // setup parameters for calling Flask app
-                string flaskAppUrl = "http://localhost:5000/execute";
+                string flaskAppUrl = "http://localhost:5000/fix";
 
                 var options = (SQLFLUFFOptions)package.GetDialogPage(typeof(SQLFLUFFOptions));
                 var config = options.BuildConfiguration();
