@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Text;
+using System.Windows.Forms;
 
 namespace SQLDefuzzer
 {
@@ -98,64 +99,119 @@ namespace SQLDefuzzer
                 //get currently active window
                 Window activeWindow = ((DTE2)dte).ActiveWindow;
 
-                if (activeWindow == null)
+                if (activeWindow == null || activeWindow.Document == null)
                 {
-                    //return for now, can display a dialog in future
+                    MessageBox.Show("No active window. Please open a query window.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
                 //get text from window
                 TextDocument textDoc = (TextDocument)activeWindow.Document.Object("TextDocument");
+                if (textDoc == null)
+                {
+                    MessageBox.Show("No text document. Please open a query window.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
                 EditPoint editPoint = textDoc.StartPoint.CreateEditPoint();
                 string sqlQuery = editPoint.GetText(textDoc.EndPoint);
 
-                // setup parameters for calling Flask app
-                string flaskAppUrl = "http://localhost:5000/fix";
+                string formattedSqlQuery = String.Empty;
 
+                var generalOptions = (GeneralOptions)package.GetDialogPage(typeof(GeneralOptions));
+               
                 var options = (SQLFLUFFOptions)package.GetDialogPage(typeof(SQLFLUFFOptions));
+
                 var config = options.BuildConfiguration();
-
-                // create JSON payload
-                var payload = new
+                if (generalOptions.UseSQLFluffContainer)
                 {
-                    code = sqlQuery,
-                    configuration = config
-                };
+                    // setup parameters for calling Flask api
+                    string sqlFluffFixEndpoint = $"{generalOptions.SQLFluffContainerEndpoint}/fix";
 
-                string jsonPayload = JsonConvert.SerializeObject(payload);
-
-                try
-                {
-                    using (HttpClient client = new HttpClient())
-                    using (HttpContent content = new StringContent(jsonPayload, Encoding.UTF8, "application/json"))
-                    using (HttpResponseMessage response = await client.PostAsync(flaskAppUrl, content))
-                    using (Stream responseStream = await response.Content.ReadAsStreamAsync())
-                    using (StreamReader reader = new StreamReader(responseStream))
+                    // create JSON payload
+                    var payload = new
                     {
-                        response.EnsureSuccessStatusCode(); // Ensure the HTTP response indicates success
+                        code = sqlQuery,
+                        configuration = config
+                    };
 
-                        // read the API response
-                        string apiResponse = await reader.ReadToEndAsync();
+                    string jsonPayload = JsonConvert.SerializeObject(payload);
 
-                        // Deserialize the JSON response
-                        var jsonResponse = JsonConvert.DeserializeObject<SqlDefuzzerFlaskResponse>(apiResponse);
+                    try
+                    {
+                        using (HttpClient client = new HttpClient())
+                        using (HttpContent content = new StringContent(jsonPayload, Encoding.UTF8, "application/json"))
+                        using (HttpResponseMessage response = await client.PostAsync(sqlFluffFixEndpoint, content))
+                        using (Stream responseStream = await response.Content.ReadAsStreamAsync())
+                        using (StreamReader reader = new StreamReader(responseStream))
+                        {
+                            response.EnsureSuccessStatusCode(); // Ensure the HTTP response indicates success
 
-                        // Extract the formatted SQL code from the response
-                        string formattedSqlQuery = jsonResponse.result;
+                            // read the API response
+                            string apiResponse = await reader.ReadToEndAsync();
 
-                        // update text within query
-                        editPoint.ReplaceText(textDoc.EndPoint, formattedSqlQuery, (int)vsEPReplaceTextOptions.vsEPReplaceTextAutoformat);
+                            // Deserialize the JSON response
+                            var jsonResponse = JsonConvert.DeserializeObject<SqlDefuzzerFlaskResponse>(apiResponse);
+
+                            // Extract the formatted SQL code from the response
+                            formattedSqlQuery = jsonResponse.result;
+
+                            // update text within query
+                            editPoint.ReplaceText(textDoc.EndPoint, formattedSqlQuery, (int)vsEPReplaceTextOptions.vsEPReplaceTextAutoformat);
+                        }
+                    }
+                    catch (HttpRequestException ex)
+                    {
+                        // Handle HTTP request-related exceptions
+                        MessageBox.Show("Container Request Error: " + ex, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Handle other exceptions
+                        MessageBox.Show("Extension Error: " + ex, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
-                catch (HttpRequestException ex)
+                else
                 {
-                    // Handle HTTP request-related exceptions
-                    Debug.WriteLine($"HTTP request failed: {ex.Message}");
-                }
-                catch (Exception ex)
-                {
-                    // Handle other exceptions
-                    Debug.WriteLine($"An error occurred: {ex.Message}");
+                    //setup parameters for calling sqlfluff
+                    ProcessStartInfo startInfo = new ProcessStartInfo();
+                    startInfo.FileName = "python";
+
+                    var sqlFluffConfig = options.ConvertToCfgFormat(config);
+
+                    var tempPath = Path.Combine(Path.GetTempPath(), ".sqlfluff");
+                    System.IO.File.WriteAllText(tempPath, sqlFluffConfig);
+
+                    startInfo.Arguments = $"-m sqlfluff fix - --dialect={SQLFLUFFOptions.MapEnumOption(options.Dialect)} --config={tempPath}";
+                    startInfo.RedirectStandardInput = true;
+                    startInfo.RedirectStandardOutput = true;
+                    startInfo.RedirectStandardError = true;
+                    startInfo.UseShellExecute = false;
+
+                    //start new process to format sql query
+                    System.Diagnostics.Process process = new System.Diagnostics.Process();
+                    process.StartInfo = startInfo;
+                    process.Start();
+
+                    //send query to process
+                    process.StandardInput.WriteLine(sqlQuery);
+                    process.StandardInput.Close();
+
+                    //read output from process
+                    formattedSqlQuery = process.StandardOutput.ReadToEnd();
+                    var sqlFluffError = process.StandardError.ReadToEnd();
+
+                    process.WaitForExit();
+
+                    if (!string.IsNullOrEmpty(sqlFluffError))
+                    {
+                        // Handle the error
+                        MessageBox.Show("Error: " + sqlFluffError, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    else
+                    {
+                        editPoint.ReplaceText(textDoc.EndPoint, formattedSqlQuery, (int)vsEPReplaceTextOptions.vsEPReplaceTextAutoformat);
+                    }
                 }
             });
         }

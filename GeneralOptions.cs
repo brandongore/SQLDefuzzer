@@ -18,6 +18,6 @@ namespace SQLDefuzzer
         [Category("General")]
         [DisplayName("SQLFluff Container Endpoint url")]
         [Description("Color of the greeting text")]
-        public string SQLFluffContainerEndpoint { get; set; } = "http://127.0.0.1:5000";
+        public string SQLFluffContainerEndpoint { get; set; } = "http://localhost:5000";
     }
 }

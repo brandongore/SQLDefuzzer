@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace SQLDefuzzer
 {
@@ -1240,7 +1241,7 @@ namespace SQLDefuzzer
         [TypeConverter(typeof(EnumOptionConverter<JoinConditionOrderOption>))]
         public JoinConditionOrderOption PreferredFirstTableInJoinClause { get; set; } = JoinConditionOrderOption.Earlier;
 
-        public object BuildConfiguration()
+        public Dictionary<string, object> BuildConfiguration()
         {
             var config = new Dictionary<string, object>();
 
@@ -1293,7 +1294,44 @@ namespace SQLDefuzzer
             return config;
         }
 
-        private static string MapEnumOption<TEnum>(TEnum enumValue) where TEnum : Enum
+        public string ConvertToCfgFormat(Dictionary<string, object> config)
+        {
+            StringBuilder cfgBuilder = new StringBuilder();
+
+            foreach (var category in config)
+            {
+                cfgBuilder.AppendLine($"[{category.Key}]");
+
+                var properties = (Dictionary<string, object>)category.Value;
+                foreach (var property in properties)
+                {
+                    cfgBuilder.AppendLine($"{property.Key} = {property.Value}");
+                }
+
+                cfgBuilder.AppendLine();
+            }
+
+            return cfgBuilder.ToString();
+        }
+
+        public void resetOptions()
+        {
+            // Create an instance of the options class with default values
+            var defaultOptions = Activator.CreateInstance(GetType());
+
+            foreach (var property in GetType().GetProperties())
+            {
+                var categoryAttribute = (CategoryAttribute)property.GetCustomAttributes(typeof(CategoryAttribute), false).FirstOrDefault();
+                if (categoryAttribute != null)
+                {
+                    var defaultValue = property.GetValue(defaultOptions);
+
+                    property.SetValue(this, defaultValue);
+                }
+            }
+        }
+
+        public static string MapEnumOption<TEnum>(TEnum enumValue) where TEnum : Enum
         {
             // Check if the UseDescription attribute is applied to the enum type
             bool useDescription = Attribute.IsDefined(typeof(TEnum), typeof(UseDescriptionAttribute));
